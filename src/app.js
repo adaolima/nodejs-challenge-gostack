@@ -37,10 +37,11 @@ app.post("/repositories", (request, response) => {
 
 app.put("/repositories/:id", (request, response) => {
   const {id} = request.params;
-  const { title, url, techs} = request.body;
+  const { title, url, techs } = request.body;
+  const likes = repositories.find(item => item.id === id ? item.likes : 0);
 
   if(repositories.filter(item => item.id === id).length === 0) {
-    return response.status(404).json({ "error": "ID não encontrado"});
+    return response.status(400).json({ "error": "ID não encontrado"});
   }
 
   repositories.map(item => {
@@ -60,27 +61,43 @@ app.put("/repositories/:id", (request, response) => {
 });
 
 app.delete("/repositories/:id", (request, response) => {
-  const {id} = request.params;
-  repositories.map((item, index) => {
-    if(item.id === id) {
-      repositories.splice(index,1);
-      return response.status(204);
-    }
-  });
-  return response.status(404).json({ "message": `It wasn´t found the repository for id ${id}`});
+  const { id } = request.params;
+  
+  if(repositories.filter(item => item.id === id).length === 0) {
+    return response.status(400).json({ "error": "ID não encontrado"});
+  }
+  if(repositories.length !== 0 ){
+    repositories.map((item, index) => {
+      if(item.id === id) {
+        console.log(item.id , index);
+        repositories.splice(index,1);
+        return response.status(204).send('Content deleted');
+      }
+    });
+  } else {
+    return response.status(400).json({ "error": "ID não encontrado"});
+  }
 
 });
 
 app.post("/repositories/:id/like", (request, response) => {
   const {id} = request.params;
+  const { method } = request;
   let repositoryLiked;
-  repositories.map(item => {
+  if(method !== 'POST') return response.status(300).json({ "error": "ROTA ERRA"});
+  if(repositories.filter(item => item.id === id).length === 0) {
+    return response.status(400).json({ "error": "ID não encontrado"});
+  } else {
+    repositories.map(item => {
     if(item.id === id) {
       item.likes += 1;
     }
-  repositoryLiked = item;
+    repositoryLiked = item;
   });
   return response.json(repositoryLiked);
+  }
+
+  
 });
 
 module.exports = app;
